@@ -1,13 +1,21 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, Field
+from uuid import UUID, uuid4
 from typing import Optional
 
-class Post(BaseModel):
-    title: str
-    description: Optional[str] = ""
+class Todo(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    name: str
+    category: str
+    status: bool
 
-    model_config = ConfigDict(extra="ignore")
 
-
-class PostResponse(BaseModel):
-    post: Post
+class BaseResponse(BaseModel):
     message: str
+    err: Optional[str] = None
+
+
+class TodoCreateResponse(BaseResponse):
+    todo: Todo
+
+class TodoGetResponse(BaseResponse):
+    todos: list[Todo]
