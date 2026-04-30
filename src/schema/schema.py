@@ -6,7 +6,7 @@ class Todo(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     name: str
     category: str
-    status: bool
+    completed: bool
 
 
 class BaseResponse(BaseModel):
