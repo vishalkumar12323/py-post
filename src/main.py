@@ -6,17 +6,19 @@ from uuid import UUID
 
 app = FastAPI(title="Todo App")
 
+# Route for create new todo with unique id
 @app.post("/create-post", response_model=TodoCreateResponse)
 def create_post(todo: Todo):
     db.append(todo)
     return TodoCreateResponse(todo=todo, message="Created")
 
-
+# Route for fetch all todos
 @app.get("/todos", response_model=TodoGetResponse)
 def fetch_todos():
     return TodoGetResponse(todos=db, message="Success")
 
 
+# Route for fetch todo by its id
 @app.get("/todo/{todo_id}", response_model=Todo | BaseResponse)
 def fetch_todo_by_id(todo_id: str) -> Todo | BaseResponse:
     try:
@@ -30,7 +32,8 @@ def fetch_todo_by_id(todo_id: str) -> Todo | BaseResponse:
             return todo
     return BaseResponse(message="Not found")
     
-        
+
+# Helper function for find todo using id in list database
 def find_todo(todo_id: str):
     for i in range(len(db)):
         if str(db[i].id) == todo_id:
@@ -38,6 +41,7 @@ def find_todo(todo_id: str):
             return i
     return -1
 
+# Route for delete existing todo from the db
 @app.delete("/todo/{todo_id}")
 def delete_todo_by_id(todo_id:str):
     todo_idx = find_todo(todo_id=todo_id)
@@ -48,7 +52,8 @@ def delete_todo_by_id(todo_id:str):
     raise HTTPException(status_code=404, detail="Todo not found")
 
 
-@app.put("/update-name/{todo_id}", response_model=TodoUpdateResponse | BaseResponse)
+# Route for update todo using todo id
+@app.put("/update-todo/{todo_id}", response_model=TodoUpdateResponse | BaseResponse)
 def update_todo(todo_id: str, data: UpdateTodoBody) -> TodoUpdateResponse | BaseResponse:
     try:
         todo_id = UUID(todo_id)
