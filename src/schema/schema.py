@@ -10,7 +10,7 @@ class Todo(BaseModel):
 
 
 class BaseResponse(BaseModel):
-    message: str
+    message: Optional[str] = None
     err: Optional[str] = None
 
 
@@ -19,3 +19,11 @@ class TodoCreateResponse(BaseResponse):
 
 class TodoGetResponse(BaseResponse):
     todos: list[Todo]
+
+class UpdateTodoBody(BaseModel):
+    name: str
+    category: str
+    completed: bool
+
+class TodoUpdateResponse(BaseResponse):
+    todo: Todo

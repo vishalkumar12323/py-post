@@ -1,6 +1,8 @@
 from fastapi import FastAPI, HTTPException
-from schema.schema import TodoCreateResponse, Todo, TodoGetResponse
+from schema.schema import TodoCreateResponse, Todo, TodoGetResponse, BaseResponse, UpdateTodoBody, TodoUpdateResponse
 from config.database import db
+from uuid import UUID
+
 
 app = FastAPI(title="Todo App")
 
@@ -15,12 +17,18 @@ def fetch_todos():
     return TodoGetResponse(todos=db, message="Success")
 
 
-@app.get("/todo/{todo_id}", response_model=Todo)
-def fetch_todo_by_id(todo_id: str):
+@app.get("/todo/{todo_id}", response_model=Todo | BaseResponse)
+def fetch_todo_by_id(todo_id: str) -> Todo | BaseResponse:
+    try:
+        todo_id = UUID(todo_id)
+    except Exception as ex:
+        return BaseResponse(message="Wrong UUID", err=str(ex))
+        
+    print(todo_id)
     for todo in db:
-        if str(todo.id) == todo_id:
+        if str(todo.id) == str(todo_id):
             return todo
-    raise HTTPException(status_code=404, detail="Todo not found")
+    return BaseResponse(message="Not found")
     
         
 def find_todo(todo_id: str):
@@ -38,3 +46,24 @@ def delete_todo_by_id(todo_id:str):
         db.pop(todo_idx)
         return {"message": "Todo deleted"}
     raise HTTPException(status_code=404, detail="Todo not found")
+
+
+@app.put("/update-name/{todo_id}", response_model=TodoUpdateResponse | BaseResponse)
+def update_todo(todo_id: str, data: UpdateTodoBody) -> TodoUpdateResponse | BaseResponse:
+    try:
+        todo_id = UUID(todo_id)
+    except Exception as err:
+        return BaseResponse(message="Wrong UUID", err=str(err))
+    
+    todo_idx = find_todo(todo_id=str(todo_id))
+
+    if todo_idx == -1:
+        return BaseResponse(message="Todo not found")
+    todo = db[todo_idx]
+    todo.name = data.name
+    todo.category = data.category
+    todo.completed = data.completed
+
+    return TodoUpdateResponse(todo=todo)
+
+
