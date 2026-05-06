@@ -72,3 +72,14 @@ def update_todo(todo_id: str, data: UpdateTodoBody) -> TodoUpdateResponse | Base
     return TodoUpdateResponse(todo=todo)
 
 
+# Route for fetch all categorial todos
+@app.get("/todos/search", response_model=TodoGetResponse|BaseResponse)
+def fetch_by_category(category: str) -> TodoGetResponse|BaseResponse:
+    todos = [todo for todo in db if todo.category == category]
+
+    if not todos:
+        return TodoGetResponse(todos=[], message="No any todos")
+    
+    return TodoGetResponse(todos=todos)
+
+
