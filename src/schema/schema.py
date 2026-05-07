@@ -2,17 +2,14 @@ from pydantic import BaseModel, Field
 from uuid import UUID, uuid4
 from typing import Optional
 
-class Todo(BaseModel):
+class BaseResponse(BaseModel):
+    message: Optional[str] = None
+    err: Optional[str] = None
+class Todo(BaseResponse):
     id: UUID = Field(default_factory=uuid4)
     name: str
     category: str
     completed: bool
-
-
-class BaseResponse(BaseModel):
-    message: Optional[str] = None
-    err: Optional[str] = None
-
 
 class TodoCreateResponse(BaseResponse):
     todo: Todo
