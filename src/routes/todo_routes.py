@@ -5,7 +5,6 @@ from config.database import db
 todo_router = APIRouter(prefix="/todo", tags=["Todos APIs"])
 
 
-
 # Route for create new todo with unique id
 @todo_router.post("/create-post", response_model=TodoCreateResponse, name="Create New Post")
 def create_post(todo: Todo):
