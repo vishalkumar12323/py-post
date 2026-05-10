@@ -1,13 +1,17 @@
-from fastapi import HTTPException, APIRouter, Response
+from fastapi import HTTPException, APIRouter, Response, Request
 from schema.schema import BaseResponse, Todo, TodoCreateResponse, TodoGetResponse, TodoUpdateResponse, UpdateTodoBody, UUID
 from config.database import db
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
+limiter = Limiter(key_func=get_remote_address)
 todo_router = APIRouter(prefix="/todo", tags=["Todos APIs"])
 
 
 # Route for create new todo with unique id
 @todo_router.post("/create-post", response_model=TodoCreateResponse, name="Create New Post")
-def create_post(todo: Todo):
+@limiter.limit("2/minute")
+def create_post(request: Request, todo: Todo):
     db.append(todo)
     return Response(content=TodoCreateResponse(todo=todo, message="Created").model_dump_json(), status_code=201)
 

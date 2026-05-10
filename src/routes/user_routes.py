@@ -3,18 +3,17 @@ from datetime import datetime
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-user_router = APIRouter(prefix="/user", tags=["User APIs"])
-
-
 limiter = Limiter(key_func=get_remote_address)
+
+user_router = APIRouter(prefix="/user", tags=["User APIs"])
 
 
 @user_router.post("/signup")
 @limiter.limit("2/minute")
-def signup(req: Request):
+def signup(request: Request):
     return {
         "status": "success",
-        "user_count" : req.app.state.req_counter
+        "user_count" : 2
     }
 
 

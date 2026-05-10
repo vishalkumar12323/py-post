@@ -10,12 +10,14 @@ from slowapi.middleware import SlowAPIMiddleware
 
 
 
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="Todo App")
 
-limiter = Limiter(key_func=get_remote_address)
 
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, lambda req, exe: JSONResponse(status_code=429, content={"detail": "To Many Request"}))
+app.add_exception_handler(RateLimitExceeded, lambda request, exe: JSONResponse(status_code=429, content={"detail": "To Many Request"}))
+
+app.add_middleware(SlowAPIMiddleware)
 
 # app.state.req_counter = 0
 
