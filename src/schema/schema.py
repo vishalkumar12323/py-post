@@ -5,6 +5,7 @@ from typing import Optional
 class BaseResponse(BaseModel):
     message: Optional[str] = None
     err: Optional[str] = None
+
 class Todo(BaseResponse):
     id: UUID = Field(default_factory=uuid4)
     name: str
@@ -16,6 +17,7 @@ class TodoCreateResponse(BaseResponse):
 
 class TodoGetResponse(BaseResponse):
     todos: list[Todo]
+
 
 class UpdateTodoBody(BaseModel):
     name: str

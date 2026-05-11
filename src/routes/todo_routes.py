@@ -1,11 +1,20 @@
-from fastapi import HTTPException, APIRouter, Response, Request
+from fastapi import HTTPException, APIRouter, Response, Request, Depends
 from schema.schema import BaseResponse, Todo, TodoCreateResponse, TodoGetResponse, TodoUpdateResponse, UpdateTodoBody, UUID
 from config.database import db
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 limiter = Limiter(key_func=get_remote_address)
-todo_router = APIRouter(prefix="/todo", tags=["Todos APIs"])
+todo_router = APIRouter(prefix="/todos", tags=["Todos APIs"])
+
+
+def check_id(id: str) -> UUID:
+    try:
+        id = UUID(id)
+    except Exception as ex:
+        raise HTTPException(detail=BaseResponse(message="WRONG UUID", err=str(ex)).model_dump(), status_code=400,)
+
+    return id
 
 
 # Route for create new todo with unique id
@@ -22,47 +31,38 @@ def fetch_todos():
 
 
 # Route for fetch todo by its id
-@todo_router.get("/todo/{todo_id}", response_model=Todo)
-def fetch_todo_by_id(todo_id: str):
-    try:
-        todo_id = UUID(todo_id)
-    except Exception as ex:
-        return Response(content=BaseResponse(message="Wrong UUID", err=str(ex)).model_dump_json(), status_code=400)
-        
-    print(todo_id)
+@todo_router.get("/todo/{id}")
+def fetch_todo_by_id(id: UUID = Depends(check_id)):
     for todo in db:
-        if str(todo.id) == str(todo_id):
-            return Response(content=todo, status_code=200)
+        if str(todo.id) == str(id):
+            return Response(content=TodoUpdateResponse(todo=todo).model_dump_json(), status_code=200)
     return Response(content=BaseResponse(message="Not found").model_dump_json(), status_code=404)
     
 
 # Helper function for find todo using id in list database
-def find_todo(todo_id: str):
+def find_todo(id: str):
     for i in range(len(db)):
-        if str(db[i].id) == todo_id:
+        if str(db[i].id) == str(id):
             print(db[i])
             return i
     return -1
 
 # Route for delete existing todo from the db
-@todo_router.delete("/todo/{todo_id}")
-def delete_todo_by_id(todo_id:str):
-    todo_idx = find_todo(todo_id=todo_id)
+@todo_router.delete("/todo/{id}")
+def delete_todo_by_id(id: UUID = Depends(check_id)):
+    todo_idx = find_todo(id=str(id))
+    print(todo_idx)
     if todo_idx != -1:
         db.pop(todo_idx)
-        return Response(content={"message": "Todo deleted"}, status_code=200)
+        return Response(content=BaseResponse(message="Todo Deleted").model_dump_json(), status_code=200)
     raise HTTPException(status_code=404, detail="Todo not found")
 
 
 # Route for update todo using todo id
-@todo_router.put("/update-todo/{todo_id}", response_model=TodoUpdateResponse | BaseResponse)
-def update_todo(todo_id: str, data: UpdateTodoBody):
-    try:
-        todo_id = UUID(todo_id)
-    except Exception as err:
-        return Response(content=BaseResponse(message="Wrong UUID", err=str(err)).model_dump_json(), status_code=400)
+@todo_router.put("/update-todo/{id}", response_model=TodoUpdateResponse | BaseResponse)
+def update_todo(data: UpdateTodoBody, id: UUID = Depends(check_id)):
     
-    todo_idx = find_todo(todo_id=str(todo_id))
+    todo_idx = find_todo(id=str(id))
 
     if todo_idx == -1:
         return Response(content=BaseResponse(message="Todo not found").model_dump_json(), status_code=404)
@@ -75,7 +75,7 @@ def update_todo(todo_id: str, data: UpdateTodoBody):
 
 
 # Route for fetch all categorial todos
-@todo_router.get("/todos/search", response_model=TodoGetResponse|BaseResponse, name="Fetch todos by category")
+@todo_router.get("/search", response_model=TodoGetResponse|BaseResponse, name="Fetch todos by category")
 def fetch_by_category(category: str):
     todos = [todo for todo in db if todo.category == category]
 
