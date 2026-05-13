@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.orm import DeclarativeBase
 
 
-DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/todo_db"
+DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5433/todos_db"
 
 DEFAULT_SCHEMA_NAME = "TODO_S"
 

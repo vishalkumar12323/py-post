@@ -7,7 +7,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-from config.database import Base, MetaData, DEFAULT_SCHEMA_NAME, engine
+from config.database import Base, DEFAULT_SCHEMA_NAME, engine
 from sqlalchemy import text
 from contextlib import asynccontextmanager
 
@@ -16,9 +16,14 @@ from contextlib import asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Application Starts")
 
-    async with engine.begin() as connection:
-        await connection.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{DEFAULT_SCHEMA_NAME}'))
-        await connection.run_sync(Base.metadata.create_all)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(text(f'CREATE SCHEMA IF NOT EXISTS {DEFAULT_SCHEMA_NAME}'))
+            await connection.run_sync(Base.metadata.create_all)
+        
+        print("DataBase Connection & Schema Created")
+    except Exception as ex:
+        print("Error:: ", ex)
 
     yield
 
