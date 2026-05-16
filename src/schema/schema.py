@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from uuid import UUID, uuid4
 from typing import Optional
 
@@ -11,6 +11,8 @@ class Todo(BaseResponse):
     name: str
     category: str
     completed: bool
+
+    model_config = ConfigDict(from_attributes=True)
 
 class TodoCreateResponse(BaseResponse):
     todo: Todo

@@ -3,6 +3,9 @@ from schema.schema import BaseResponse, Todo, TodoCreateResponse, TodoGetRespons
 from config.database import db
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+from config.database import get_db, Todo
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 limiter = Limiter(key_func=get_remote_address)
 todo_router = APIRouter(prefix="/todos", tags=["Todos APIs"])
@@ -20,14 +23,23 @@ def check_id(id: str) -> UUID:
 # Route for create new todo with unique id
 @todo_router.post("/create-post", response_model=TodoCreateResponse, name="Create New Post")
 @limiter.limit("2/minute")
-def create_post(request: Request, todo: Todo):
-    db.append(todo)
-    return Response(content=TodoCreateResponse(todo=todo, message="Created").model_dump_json(), status_code=201)
+async def create_post(request: Request, todo: Todo, db: AsyncSession = Depends(get_db)):
+    new_todo = Todo(**todo.model_dump())
+    db.add(new_todo)
+    await db.commit()
+
+    await db.refresh(new_todo)
+    return Response(content=TodoCreateResponse(todo=Todo.model_validate(new_todo), message="Created").model_dump_json(), status_code=201)
 
 # Route for fetch all todos
 @todo_router.get("/todos", response_model=TodoGetResponse)
-def fetch_todos():
-    return Response(content=TodoGetResponse(todos=db, message="Success").model_dump_json(), status_code=200)
+async def fetch_todos(db: AsyncSession = Depends(get_db)):
+    response = await db.execute(select(Todo))
+    todo_models = response.scalars().all()
+
+    todos: list[Todo] = [Todo.model_validate(todo_model) for todo_model in todo_models]
+
+    return Response(content=TodoGetResponse(todos=todos, message="Success").model_dump_json(), status_code=200)
 
 
 # Route for fetch todo by its id
